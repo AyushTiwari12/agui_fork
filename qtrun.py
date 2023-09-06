@@ -7,14 +7,14 @@ import subprocess
 
 class MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, parameters, param_file, filetype):
+    def __init__(self, parameters, input_file, filetype):
         super(MainWindow, self).__init__()
 
         self.groups = parameters
         self.radio_groups = []
-        self.param_file = param_file
-        self.param_file_type = filetype
-        self.sliderMultiplier = []
+        self.input_file = input_file
+        self.input_file_type = filetype
+        self.slider_multiplier = []
         self.sliders = []
 
         self.initUI()
@@ -22,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def initUI(self):
         self.pagelayout = QtWidgets.QVBoxLayout()       #page layout
 
-        #run, save, load, quit, help buttons -> located in a toolbar
+        # run, save, load, quit, help buttons -> located in a toolbar
         toolbar = self.addToolBar("ToolBar")
 
         run_action = QtWidgets.QAction('Run', self)
@@ -47,28 +47,32 @@ class MainWindow(QtWidgets.QMainWindow):
         quit_action.triggered.connect(self.quit)
         help_action.triggered.connect(self.help)
         
-        #set the main page layout
+        # set the main page layout
         widget = QtWidgets.QWidget()
         widget.setLayout(self.pagelayout) 
-        scroll = QtWidgets.QScrollArea()    #add scrollbar
+
+        # add scrollbar
+        scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(widget)
         self.setCentralWidget(scroll)
 
         self.createWidgetsFromGroups()
     
+    # runs the file. takes the input file and runs it, piping the set paraments into the file as args
     def run(self):
-        contents = self.gatherData()
+        contents = self.gather_data()
         param = ""
         for line in contents:
             for key, value in line.items():
                 param += f"{key}={value} "
-        print(param.split())
-        subprocess.run([self.param_file_type, self.param_file] + param.split())
+        subprocess.run([self.input_file_type, self.input_file] + param.split())
     
+    # saves the options into a separate file named inputfilename.key. Thiswill be saved in the format
+    # key=value and formatted according to the input file type.
     def save(self):
-        contents = self.gatherData()
-        default_file_path = self.param_file + ".key"
+        contents = self.gather_data()
+        default_file_path = self.input_file + ".key"
         file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save File", default_file_path, "All Files (*)")
         if file_path:
             with open(file_path, "w") as file:
@@ -78,9 +82,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     file.write("\n")
             print("saved to " + file_path)
     
+    # loads the saved options from a previous session into the current gui. Will default to the file
+    # named inputfilename.key
     def load(self):
         options = QtWidgets.QFileDialog.Options()
-        load_file = self.param_file +".key" if os.path.exists(self.param_file +".key") else ""
+        load_file = self.input_file +".key" if os.path.exists(self.input_file +".key") else ""
         file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Choose a File", load_file, "All Files (*)", options=options)
         
         #parse the loaded file
@@ -89,7 +95,7 @@ class MainWindow(QtWidgets.QMainWindow):
             default_values = {}
             with open(file, "r") as f:
                 for line in f:
-                    if self.param_file_type == 'csh':
+                    if self.input_file_type == 'csh':
                         line = re.sub("set","",line,count=1)
                     label, value = line.strip().split("=")
                     if value.startswith('"') and value.endswith('"') or value.startswith("'") and value.endswith("'"):
@@ -112,9 +118,9 @@ class MainWindow(QtWidgets.QMainWindow):
                                 widget.setChecked(True)
 
                         elif isinstance(widget, QtWidgets.QSlider):
-                            multiplier = self.sliderMultiplier.pop(0)
+                            multiplier = self.slider_multiplier.pop(0)
                             widget.setValue(int(float(''.join(default_values[widget.objectName()]))*multiplier))
-                            self.sliderMultiplier.append(multiplier)
+                            self.slider_multiplier.append(multiplier)
 
     def quit(self):
         self.close()
@@ -123,6 +129,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def help(self):
         print('help')
 
+    # function to create each widget from the input file
     def createWidgetsFromGroups(self):
         for group in self.groups:
             group_type, group_name, options, default_option, help = group
@@ -214,7 +221,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 slider_label = QtWidgets.QLabel(f"{slider.value()/multiplier}", self)
                 slider.valueChanged.connect(lambda: self.updateLabel())
                 slider.setObjectName(group_name)
-                self.sliderMultiplier.append(multiplier)
+                self.slider_multiplier.append(multiplier)
                 self.sliders.append((slider, slider_label, multiplier))
                 group_layout.addWidget(slider_label)
                 group_layout.addWidget(slider)
@@ -246,7 +253,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if dir:
             print(f"{dir} selected")
 
-    def gatherData(self):
+    def gather_data(self):
         layout_data = []
 
         for hbox_layout_index in range(self.pagelayout.count()):
@@ -261,7 +268,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     
                     if widget_index == 0 and isinstance(widget, QtWidgets.QLabel):
                         key = widget.text().split(':')[0]
-                        if self.param_file_type == "csh":
+                        if self.input_file_type == "csh":
                             key = "set " + key
                         defaults[key] = []
 
@@ -275,15 +282,15 @@ class MainWindow(QtWidgets.QMainWindow):
                             defaults[key].append(value)
 
                     elif isinstance(widget, QtWidgets.QSlider):
-                        multiplier = self.sliderMultiplier.pop(0)
+                        multiplier = self.slider_multiplier.pop(0)
                         value = str(widget.value()/multiplier)
                         defaults[key].append(value)
-                        self.sliderMultiplier.append(multiplier)
+                        self.slider_multiplier.append(multiplier)
 
                 values = defaults[key]
                 values = ','.join(values)
                 
-                if self.param_file_type == "python":
+                if self.input_file_type == "python":
                     defaults[key] = "'" + values + "'"
                 else:
                     defaults[key] = values
@@ -324,14 +331,14 @@ def parsefile(file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Dynamic GUI Builder")
-    parser.add_argument("param_file", help="Path to the text file containing parameters")
+    parser.add_argument("input_file", help="Path to the text file containing parameters")
     args = parser.parse_args()
 
-    groups, filetype = parsefile(args.param_file)    
+    groups, filetype = parsefile(args.input_file)    
 
     app = QtWidgets.QApplication(sys.argv)
-    w = MainWindow(groups, args.param_file, filetype)
-    w.inputFile = args.param_file
+    w = MainWindow(groups, args.input_file, filetype)
+    w.inputFile = args.input_file
     w.adjustSize()  #adjust to fit elements accordingly
 
     #sets a minimum window size
