@@ -1,0 +1,3 @@
+#  brew install $(grep -v ^# requirements.brew)
+#
+cmake

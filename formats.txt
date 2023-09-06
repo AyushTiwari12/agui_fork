@@ -9,14 +9,14 @@ set rmax    = 1         #> SCALE rmax=1       0:2:0.1
 set vscale  = 0.9       #> SCALE vscale=0.9   -2:2:0.1
 set outflow = 0.4       #> SCALE outflow=0.4  0:2:0.1
 
-# new CSH
+# new CSH (but without optional help)
 set nbody   = 10000     #> SCALE  1000:1000000:1000
 set rmin    = 0.3       #> SCALE  0:1:0.1
 set rmax    = 1         #> SCALE  0:2:0.1
 set vscale  = 0.9       #> SCALE -2:2:0.1
 set outflow = 0.4       #> SCALE  0:2:0.1
 
-# new SH
+# new SH (but without optional help)
   nbody=10000     #> SCALE  1000:1000000:1000
    rmin=0.3       #> SCALE  0:1:0.1
    rmax=1         #> SCALE  0:2:0.1
@@ -24,7 +24,7 @@ set outflow = 0.4       #> SCALE  0:2:0.1
 outflow=0.4       #> SCALE  0:2:0.1
    file=foobar
 
-# new python
+# new python (without optional help)
 
   nbody=10000     #> SCALE  1000:1000000:1000
    rmin=0.3       #> SCALE  0:1:0.1
@@ -33,3 +33,17 @@ outflow=0.4       #> SCALE  0:2:0.1
 outflow=0.4       #> SCALE  0:2:0.1
 file="foobar"     #> IFILE
 
+# extended  (new) format
+
+This is the proposed new format that should fit (c)sh, python and athinput. athinput is special, since the
+<block>'s in the athinput file gets translated to block/key=val for the commandline.
+
+The help goes between the defaults for key=val and the '#>' GUI directive.
+
+#<mesh>
+nx1=64          # Number of zones in X1-direction                #> SCALE  16:512:16
+nx2=32          # Number of zones in X2-direction                #> RADIO  1,16,32,64,128,256
+nx3=32          # Number of zones in X3-direction                #> RADIO  1,16,32,64,128,256
+<time>
+time/cfl_number=0.3  # The Courant, Friedrichs, & Lewy (CFL) Number   #> SCALE  0:1.2:0.1
+time/tlim=5.0        # time limit                                     #> SCALE  1:100:1
