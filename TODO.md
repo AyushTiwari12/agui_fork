@@ -20,6 +20,10 @@
   - it's easy to accidentally hiut the RUN button twice.... athena will run twice. Do
     we need to make a lock file?
 
+- GUI time slider:  it's hard to find a specific time, it would be good if the scrollbar
+  and/or click to the left or right of the slider would advance/decrease the slider by
+  one unit. 
+
 - Important need for our GUI tags.   We need a new TAGNAME, that clones a keyword value, e.g.
        nx=1   # help for a    #>   SLIDER 0:10:1
        ny=1   # help for b    #>   LINK nx
