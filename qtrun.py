@@ -62,13 +62,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.createWidgetsFromGroups()
     
     # runs the file. takes the input file and runs it, piping the set paraments into the file as args
+    # it assumes the script can self-execute with the appropriate #! directive on the first line
     def run(self):
         contents = self.gather_data()
-        param = ""
+        param = self.input_file
         for line in contents:
             for key, value in line.items():
-                param += f"{key}={value} "
-        subprocess.run([self.input_file_type, self.input_file] + param.split())
+                param += f" {key}={value}"
+        subprocess.run(param.split())
     
     # saves the options into a separate file named inputfilename.key. Thiswill be saved in the format
     # key=value and formatted according to the input file type.
