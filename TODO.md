@@ -2,40 +2,77 @@
 
 - python vs. python3 (just a worry if some have no python, but do have python3)
 
-- better detect what's available (tab, vtk, bin)
-  - use the -d flag in plot1.py for directory, it should auto-detect *.tab or tab/*.tab  [done]
-  - use vtk reader to grab vtk files (1d and 2d)  [no more vtk, we use bin]
-  - use bin reader (can do AMR, where vtk cannot) - check between
+- pythana (as package name) is already in use by PyPi:   https://pypi.org/project/pythena/
+  so either we change the name, or live with duplicate.   Plenty of those for NEMO already.
+
+  Also: if we allow 'pip install' we need to build a proper wheel, such that athenak gets
+  pulled and compiled.
+
 
 - for output (run) directory, use basename of the problem set, and then run1, run2, ..... inside of those?
   - the startup tool could look inside the problem run directories
-  - this closes the loop in running and reviewing old runs  
+  - this closes the loop in running and reviewing old runs
+  - could clean up after running?
 
 - GUI peculiarities
-  - when browsing, a cancel does not repopulate with the old entry
+  - when browsing, a cancel does not repopulate with the old entry [fixed]
   - killing parent will not kill the children (could be an advanced option,
     because it's nice killing a parent keeps the children alive.
+  - resizing and sizing of sub-areas in the GUI (avoid negative space)
+  - the delay(ms) in the animator doesn't seem to work well, it's erratic?
+    For example I had it taking 5.8sec to do run2, but that was then
+    independent of the delay setting , which is now 1..20 ms.
+  - in the animation, the picture at T=0 when nothing is loaded yet looks
+  - it's easy to accidentally hut the RUN button twice.... athena will run twice. Do
+    we need to make a lock file?
 
-- option to integrate with a running athena
+- GUI time slider:  it's hard to find a specific time, it would be good if the scrollbar
+  and/or click to the left or right of the slider would advance/decrease the slider by
+  one unit. 
 
-- plot1d:  bring up multiple plots.  issue will be what scaling to use
+- Important need for our GUI tags.   We need a new TAGNAME, that clones a keyword value, e.g.
+       nx=1   # help for a    #>   SLIDER 0:10:1
+       ny=1   # help for b    #>   LINK nx
+  or in athena there are blocks, so there it would need to be something like
+       ny=1   # help for b    #>   LINK mesh/nx
+  this would cause mesh/ny to get the value of mesh/nx.
+
+- GUI ideas
+  - when in animation and changing variables, perhaps stick to the time so one can flip at that time
+    between e.g. x1v-dens and x1v-velx
+  - when in a zoomed mode, remember the new viewing frame and keep that as the animation continues
+    or flipping between line and dots, or flipping between variables?
+
+- option to integrate with a running athena [advanced]
+
+- plot1d:  bring up multiple graphs in one plot.  issue will then how to solve the scaling issue
+
+- plot1d:  allow a fixed scaling [the -f flag does that based on first plot, but not always good enough]
 
 - plot2d:  allow option of contour with color, or just contour or just color. this would
-  (like in plot1d) give us option to combine two variables
+  (like in plot1d) give us option to combine two variables and compare them.
 
+- ensure if with id= we can handle different *.tab files. Probably need a new --id flag in plot1d.py for this
+  In the end, extracting them from the bin file might be faster.
+  
+- save animation as mp4? 
   
 
 # Older vis software from athenak
 
 Awkward to use, but here it is:
 
-      ./plot_tab.py  -i tab/LinWave.hydro_w.00000.tab  -n 100 -v dens
+      ./plot_tab.py  -i run1/tab/LinWave.hydro_w.00000.tab  -n 100 -v dens
 
 and for 2D:
 
       ./plot_slice.py run2/bin/OrszagTang.mhd_w_bcc.00001.bin dens show --notex
 
-but this only brings up one plot, no animation. our plot2d should do that
+but this only brings up one plot, no animation. our plot2d should do that.
+
+And for hst files
+
+      ./plot_hst.py ./plot_hst.py  -i run2/OrszagTang.mhd.hst  -v dt
 
 
 # Features

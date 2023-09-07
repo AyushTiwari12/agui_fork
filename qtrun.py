@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+#
 import sys
 import os
 from PyQt5 import QtCore, QtWidgets
@@ -60,6 +62,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.createWidgetsFromGroups()
     
     # runs the file. takes the input file and runs it, piping the set paraments into the file as args
+    # it assumes the script can self-execute with the appropriate #! directive on the first line
     def run(self):
         print("running: " + self.input_file)
         contents = self.gather_data()

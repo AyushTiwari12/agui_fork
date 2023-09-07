@@ -1,46 +1,82 @@
 #! /usr/bin/env python
+#
+#     plot2d:    animate images
+#
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RadioButtons, Button, Slider, CheckButtons, TextBox
 from argparse import ArgumentParser
+import athena_read
 import glob
 import os
+import sys
 import matplotlib.style as mplstyle
-mplstyle.use(['ggplot', 'fast'])
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+#mplstyle.use(['ggplot', 'fast'])
 
 # TODO list
 # round buttons
 # round check boxes
 # nonlinear (logarithmic?) slider
 
-# IMPORTING FROM ANIMATE2
-# function that draws each frame of the animation
+kwargs = {}
+kwargs['variable'] = 'dens'
+kwargs['dimension'] = 'z'
+kwargs['location'] = 0
+kwargs['vmin'] = None
+kwargs['vmax'] = None
+kwargs['norm'] = 'linear'
+kwargs['cmap'] = 'rainbow'
+kwargs['cmap'] = 'gist_rainbow'
+kwargs['cmap'] = 'viridis'
+kwargs['x1_min'] = None
+kwargs['x1_max'] = None
+kwargs['x2_min'] = None
+kwargs['x2_max'] = None
+kwargs['output_file'] = None
+
+zvar = 'dens'
+
+# https://saturncloud.io/blog/how-to-animate-the-colorbar-in-matplotlib-a-guide/
+
 def animate(i):
-    global xcol, ycol, current_frame, xlim, ylim
-    # print(f[i])
-    d = np.loadtxt(f[i]).T
-    x = d[ixcol]
-    y = d[iycol]
-    if not args.hst:
-        with open(f[i]) as file:
-            # first line is target
-            # terribly lazy but it works, maybe just use regex
-            time = file.readline().split('=')[1].split(' ')[0]
+    global xcol, ycol, current_frame, xlim, ylim, kwargs
+    kwargs['variable'] = zvar
+    if False:
+        d = athena_read.bin(f[i],False,**kwargs)
+    else:
+        d = data[i][zvar][0]
+    time = data[i]['time']
+    xlim = data[i]['xlim']
+    ylim = data[i]['ylim']
+    extent=[xlim[0],xlim[1],ylim[0],ylim[1]]
+    #sax.set_xlim((-0.5,0.5))
+    
+
     ax.clear()
-    if xlim:
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
-    ax.plot(x, y)
+    #ax.set_xlim(xlim)
+    #ax.set_ylim(ylim)
+    if True:
+        im = ax.imshow(d,cmap=kwargs['cmap'],  # norm=norm, vmin=vmin, vmax=vmax,
+                       interpolation='none', origin='lower', extent=extent)
+                       
+        
+        # @todo    this fig.colorbar() will recursively die
+        # fig.colorbar(im, cax=cax, orientation='vertical')
+    else:
+        # now broken after using extent=
+        im = ax.imshow(d,cmap=kwargs['cmap'],  # norm=norm, vmin=vmin, vmax=vmax,
+                       interpolation='none', origin='lower', extent=extent)
+        x = np.arange(d.shape[0])
+        y = np.arange(d.shape[1])
+        cs = ax.contour(x,y,d,extent=extent)
+                       
     if not xlim and args.fix: # just need to check one since its either both or none
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
-    if not args.hst:
-        ax.set_title(f'Time: {float(time)}', loc='left')
-    else:
-        ax.set_title(f'History', loc='left')
-    ax.set_xlabel(xcol)
-    ax.set_ylabel(ycol)
-# END IMPORT
+    ax.set_title(f'{zvar}  Time: {float(time)}', loc='left')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
 
 # hard-pauses the animation
 # that is, the only way to unpause is by using the play or restart button
@@ -102,20 +138,9 @@ def restart(self=None):
     current_frame=0
     resume()
 
-# select the horizontal variable
-def select_h(label):
-    global current_frame, ycol, xlim
-    update_cols(label, ycol)
-    if not hard_paused:
-        restart()
-    else:
-        xlim = None
-        animate(current_frame)
-        fig.canvas.draw_idle()
-
-# select the verticle variable
+# select the variable
 def select_v(label):
-    global current_frame, xcol, xlim
+    global current_frame, xcol, xlim, zvar
     update_cols(xcol, label)
     if not hard_paused:
         restart()
@@ -123,6 +148,10 @@ def select_v(label):
         xlim = None
         animate(current_frame)
         fig.canvas.draw_idle()
+    print('select_v',label)
+    zvar = label
+    kwargs['variable'] = zvar
+    reload_data()
 
 def update_cols(x, y):
     global xcol, ycol, ixcol, iycol
@@ -134,6 +163,8 @@ def update_cols(x, y):
 def update_delay(x):
     global delay
     delay = x / 1000
+    #  something odd about setting the delay
+    # print("DELAY:",delay)
 
 def update_fslider(n):
     global frame_sliding, current_frame
@@ -154,25 +185,31 @@ def mouse_moved(e):
     elif not hard_paused:
         resume()
 
+def reload_data():
+    global data
+    print("Reading %d data-frames for %s" % (length,zvar))
+    for i in range(len(f)):
+        data[i] = athena_read.bin(f[i],False,**kwargs)
+    
+
 argparser = ArgumentParser(description='plots the athena tab files specified')
 argparser.add_argument('-d', '--dir', help='the athena run directory containing tab/ or *.tab files', required=True)
-argparser.add_argument('--hst', action='store_true', help='plots the hst file rather animating the tab files')
 argparser.add_argument('-n', '--name', help='name of the problem being plotted') # primarily just used by the other gui
 argparser.add_argument('-f', '--fix', action='store_true', help='fixes the x and y axes of the animation based on the animation\'s first frame')
 args = argparser.parse_args()
 
-# @todo   there can be several ID types of the form   BASENAME.ID.NNNNN.tab
-if args.hst:
-    f = glob.glob(args.dir + '/*.hst')
-else:
-    if os.path.exists(args.dir + '/tab'):
-        # athena++/athenak style
-        f = glob.glob(args.dir + '/tab/*.tab')
-    else:
-        # athenac style
-        f = glob.glob(args.dir + '/*.tab')
+f = glob.glob(args.dir + '/bin/*.bin')
 f.sort()
 length = len(f)
+
+if length==0:
+    print("No bin data found")
+    sys.exit(0)
+
+data = list(range(len(f)))
+reload_data()
+
+
 #print('DEBUG: %s has %d files' % (fnames,len(f)))
 
 # global vars
@@ -189,31 +226,12 @@ left = 0.34
 bottom = 0.25
 top = 0.85
 
-# change plot settings if plotting a hst file
-if args.hst:
-    top = 0.9
-    bottom = 0.1
-
 # the time in seconds between frames
 delay = 100 / 1000
 
 # getting the variable names
-with open(f[0]) as file:
-    file.readline()
-    # regular tab file have as 2nd line
-    # i       x1v         rho ...               for athena
-    # gid   i       x1v         dens ...        for athenak
-    line2 = file.readline()
-    variables = line2.split()[1:]
-
-    # history files have as 2nd line
-    # [1]=time      [2]=dt       [3]=mass ...
-    # @todo  AthenaC has spaces in the column names, would need a different parsers
-    if args.hst:
-        print("DEBUG hst",line2)
-        variables = [v.split('=')[1] for v in variables]
-    print("tab variables detected:",variables)
-
+variables = athena_read.bin(f[0],True)
+print("bin variables detected:",variables)
 var_len = len(variables)
 
 # 0-based, change from animate2
@@ -225,6 +243,9 @@ iycol = 0
 # plotting configuration
 fig, ax = plt.subplots()
 fig.subplots_adjust(left=left, bottom=bottom, top=top) # old bottom was 0.34
+divider = make_axes_locatable(ax)
+cax = divider.append_axes('right', size='5%', pad=0.05)
+sax = ax.secondary_xaxis('bottom')
 # plt.rcParams['font.family'] = 'Arial'
 # pause on close otherwise we might freeze
 fig.canvas.mpl_connect('close_event', pause)
@@ -239,21 +260,12 @@ rbot = (bottom + top - rheight) / 2
 
 rax = fig.add_axes([rdleft, rbot, rwidth, rheight])
 
-# @todo   label_props and radio_props don't appear until python 3.10.x 
-
-radio = RadioButtons(rax, 
-                     tuple(variables), 
-                     label_props={'color': ['white' for _ in variables]},
-                     radio_props={'color': ['#1f77b4' for _ in variables], 'edgecolor': ['black' for _ in variables]}
-                     )
-rax.axis('off') # removes the border around the radio buttons
-radio.on_clicked(select_h)
 
 # use same axes to add text in order to make it easier to adjust
-rax.text(-0.055, 0.05, 'X')
+# rax.text(-0.055, 0.05, 'X')
 rax.text(0.055, 0.05, 'Y')
 
-rax = fig.add_axes([rdleft + 0.015, rbot, 0.25, rheight])
+# rax = fig.add_axes([rdleft + 0.015, rbot, 0.25, rheight])
 radio2 = RadioButtons(rax, 
                       tuple(variables), 
                       radio_props={'color': ['#1f77b4' for _ in variables], 'edgecolor': ['black' for _ in variables]}
@@ -261,7 +273,7 @@ radio2 = RadioButtons(rax,
 rax.axis('off')
 radio2.on_clicked(select_v)
 
-if not args.hst:
+if True:
 
     bwidth = 0.04
     bheight = 0.05
@@ -281,7 +293,7 @@ if not args.hst:
     delay_slider = Slider(
         ax=fig.add_axes([0.18, 0.05, 0.65, 0.03]),
         label='Delay (ms)',
-        valmin=0,
+        valmin=1,
         valmax=20,
         valinit=5,
     )
@@ -300,57 +312,6 @@ if not args.hst:
 
     fslider.on_changed(update_fslider)
 
-    '''cbax = fig.add_axes([bstart + 3 * bwidth + 3 * bspace, 0.09, 0.1, 0.125])
-    fix_cbox = CheckButtons(
-    ax=cbax,
-    labels=[' Fix X', ' Fix Y']
-    )
-    cbax.axis('off')
-
-    fix_cbox.on_clicked(fix_axes)'''
-
-    '''twidth = 0.1
-    theight = 0.04
-    txstart=0.35
-    tspace = 0.075
-    tystart1 = 0.11
-    tystart2 = tystart1 + 0.05
-    
-    xmin_ax = fig.add_axes([txstart, tystart1, twidth, theight])
-    xmin_box = TextBox(
-        ax=xmin_ax,
-        label='min '
-    )
-
-    xmin_ax.text(-0.9, 0.25, 'X:')
-
-    xmax_box = TextBox(
-        ax=fig.add_axes([txstart + twidth + tspace, tystart1, twidth, theight]),
-        label='max '
-    )
-
-    xscale_box = TextBox(
-        ax=fig.add_axes([txstart + 2*twidth + 2*tspace, tystart1, twidth, theight]),
-        label='scale '
-    )
-
-    ymin_ax = fig.add_axes([txstart, tystart2, twidth, theight])
-    ymin_box = TextBox(
-        ax=ymin_ax,
-        label='min '
-    )
-
-    ymin_ax.text(-0.9, 0.25, 'Y:')
-
-    ymax_box = TextBox(
-        ax=fig.add_axes([txstart + twidth + tspace, tystart2, twidth, theight]),
-        label='max '
-    )
-
-    yscale_box = TextBox(
-        ax=fig.add_axes([txstart + 2*twidth + 2*tspace, tystart2, twidth, theight]),
-        label='scale '
-    )'''
 
     # in order to pause the animation when using the frame slider
     fig.canvas.mpl_connect('motion_notify_event', mouse_moved)
