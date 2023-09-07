@@ -11,9 +11,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__()
 
         self.groups = parameters
-        self.radio_groups = []
         self.input_file = input_file
         self.input_file_type = filetype
+        self.radio_groups = []
         self.slider_multiplier = []
         self.sliders = []
 
@@ -135,7 +135,7 @@ class MainWindow(QtWidgets.QMainWindow):
             group_type, group_name, options, default_option, help = group
 
             if group_type == "RADIO":
-                print("radio button created")
+                # print("radio button created")
                 new_group = QtWidgets.QButtonGroup()
                 self.radio_groups.append(new_group)
                 group_layout = QtWidgets.QHBoxLayout()
@@ -165,15 +165,16 @@ class MainWindow(QtWidgets.QMainWindow):
                 txt.setText(default_option)
                 txt.setObjectName(group_name)
                 if group_type == "OFILE" or group_type == "IFILE":
-                    btn.clicked.connect(lambda edit=txt: self.browse("FILE", edit))
+                    self.ofile = group_name
+                    btn.clicked.connect(lambda _, edit=txt: self.browse("FILE", edit))
                 else:
-                    btn.clicked.connect(lambda edit=txt: self.browse("DIR", edit))
+                    btn.clicked.connect(lambda _, edit=txt: self.browse("DIR", edit))
                 group_layout.addWidget(btn)
                 group_layout.addWidget(txt)
                 self.pagelayout.addLayout(group_layout)
 
             elif group_type == "CHECK":
-                print("checkbox created")
+                # print("checkbox created")
                 group_layout = QtWidgets.QHBoxLayout()
                 label = QtWidgets.QLabel(group_name+":")
                 label.setToolTip(help)
@@ -188,7 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.pagelayout.addLayout(group_layout)
 
             elif group_type == "ENTRY":
-                print("textbox created")
+                # print("textbox created")
                 group_layout = QtWidgets.QHBoxLayout()
                 label = QtWidgets.QLabel(group_name+":")
                 label.setToolTip(help)
@@ -207,7 +208,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 options = ''.join(options)
                 options = options.split(':')
 
-                print("slider created")
+                # print("slider created")
                 #creates a horizontal decimal slider
                 decimals = len(str(options[2]).split('.')[1]) if '.' in str(options[2]) else 0
                 multiplier = 10**decimals
@@ -243,7 +244,6 @@ class MainWindow(QtWidgets.QMainWindow):
         options = QtWidgets.QFileDialog.Options()
         file = None
         dir = None
-
         if gtype == 'FILE':
             file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Choose a File", "", "All Files (*)", options=options)
         if gtype == 'DIR':
@@ -252,8 +252,9 @@ class MainWindow(QtWidgets.QMainWindow):
             txt.setText(file)
             print(file + " selected")
         if dir:
-            print(f"{dir} selected")
-
+            txt.setText(dir)
+            print(dir + " selected")
+        
     def gather_data(self):
         layout_data = []
 
