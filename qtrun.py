@@ -61,14 +61,15 @@ class MainWindow(QtWidgets.QMainWindow):
     
     # runs the file. takes the input file and runs it, piping the set paraments into the file as args
     def run(self):
+        print("running: " + self.input_file)
         contents = self.gather_data()
-        param = ""
+        param = self.input_file
         for line in contents:
             for key, value in line.items():
-                param += f"{key}={value} "
-        subprocess.run([self.input_file_type, self.input_file] + param.split())
+                param += f" {key}={value}"
+        subprocess.run(param.split())
     
-    # saves the options into a separate file named inputfilename.key. Thiswill be saved in the format
+    # saves the options into a separate file named inputfilename.key. This will be saved in the format
     # key=value and formatted according to the input file type.
     def save(self):
         contents = self.gather_data()
@@ -124,7 +125,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def quit(self):
         self.close()
-        print('quit')
 
     def help(self):
         print('help')
@@ -219,7 +219,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 slider.setValue(int(float(default_option[0])*multiplier))
 
                 slider_label = QtWidgets.QLabel(f"{slider.value()/multiplier}", self)
-                slider.valueChanged.connect(lambda: self.updateLabel())
+
+                slider.valueChanged.connect(lambda: self.update_label()) # updates to current value
                 slider.setObjectName(group_name)
                 self.slider_multiplier.append(multiplier)
                 self.sliders.append((slider, slider_label, multiplier))
@@ -234,7 +235,7 @@ class MainWindow(QtWidgets.QMainWindow):
             separator.setFixedHeight(1)  # Set a fixed height for the separator
             self.pagelayout.addWidget(separator)
 
-    def updateLabel(self):
+    def update_label(self):
         for slider, label, multiplier in self.sliders:
             label.setText(f"{slider.value()/multiplier}")
 
@@ -337,8 +338,9 @@ if __name__ == '__main__':
     groups, filetype = parsefile(args.input_file)    
 
     app = QtWidgets.QApplication(sys.argv)
-    w = MainWindow(groups, args.input_file, filetype)
-    w.inputFile = args.input_file
+    
+    w = MainWindow(groups, os.path.abspath(args.input_file), filetype)
+    # w.inputFile = args.input_file
     w.adjustSize()  #adjust to fit elements accordingly
 
     #sets a minimum window size
