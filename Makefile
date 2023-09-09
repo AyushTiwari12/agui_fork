@@ -11,7 +11,7 @@ PYTHON = anaconda3
 
 # git directories we should have here
 
-GIT_DIRS = athena athenak
+GIT_DIRS = athena athenak pythena
 
 # URLs that we'll need
 
@@ -116,6 +116,13 @@ build_nemo:    nemo
 
 ## build_python:    build your private anaconda3
 build_python:  python
+
+## build_pythena:   testing a new pyThena, rebuild from scratch
+build_pythena:   
+	rm -rf pyThena
+	git clone $(URL6)
+	(cd pyThena; make build_athenak; make run1; make test1)
+
 
 # a few sample runs
 
@@ -237,9 +244,4 @@ agui_a:
 agui_k:
 	git clone $(URL5c) agui_k
 
-# testing a pyThena from scratch:
 
-pythena:
-	rm -rf pyThena
-	git clone $(URL6)
-	(cd pyThena; make build_athenak; make run1; make test1)
