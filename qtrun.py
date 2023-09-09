@@ -207,6 +207,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 group_layout.addWidget(label)
                 options = ''.join(options)
                 options = options.split(':')
+                print(default_option)
 
                 # print("slider created")
                 #creates a horizontal decimal slider
@@ -217,7 +218,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 slider.setSingleStep(int(float(options[2])*multiplier))
                 slider.setPageStep(int(float(options[2])*multiplier))       #moves the slider when clicking or up/down
                 slider.setRange(int(options[0])*multiplier, int(options[1])*multiplier)
-                slider.setValue(int(float(default_option[0])*multiplier))
+                slider.setValue(int(float(default_option)*multiplier))
 
                 slider_label = QtWidgets.QLabel(f"{slider.value()/multiplier}", self)
 
