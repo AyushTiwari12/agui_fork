@@ -138,7 +138,6 @@ class MainWindow(QtWidgets.QMainWindow):
             group_type, group_name, options, default_option, help = group
 
             if group_type == "RADIO":
-                # print("radio button created")
                 new_group = QtWidgets.QButtonGroup()
                 self.radio_groups.append(new_group)
                 group_layout = QtWidgets.QHBoxLayout()
@@ -156,7 +155,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.pagelayout.addLayout(group_layout)
 
             elif group_type == "IFILE" or group_type == "OFILE" or group_type == "IDIR" or group_type == "ODIR":
-                print("browse files button created")
                 group_layout = QtWidgets.QHBoxLayout()
                 label = QtWidgets.QLabel(group_name+":")
                 label.setToolTip(help)
@@ -177,7 +175,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.pagelayout.addLayout(group_layout)
 
             elif group_type == "CHECK":
-                # print("checkbox created")
                 group_layout = QtWidgets.QHBoxLayout()
                 label = QtWidgets.QLabel(group_name+":")
                 label.setToolTip(help)
@@ -192,7 +189,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.pagelayout.addLayout(group_layout)
 
             elif group_type == "ENTRY":
-                # print("textbox created")
                 group_layout = QtWidgets.QHBoxLayout()
                 label = QtWidgets.QLabel(group_name+":")
                 label.setToolTip(help)
@@ -210,9 +206,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 group_layout.addWidget(label)
                 options = ''.join(options)
                 options = options.split(':')
-                print(default_option)
 
-                # print("slider created")
                 #creates a horizontal decimal slider
                 decimals = len(str(options[2]).split('.')[1]) if '.' in str(options[2]) else 0
                 multiplier = 10**decimals
@@ -239,6 +233,9 @@ class MainWindow(QtWidgets.QMainWindow):
             separator.setFrameShadow(QtWidgets.QFrame.Sunken)
             separator.setFixedHeight(1)  # Set a fixed height for the separator
             self.pagelayout.addWidget(separator)
+
+            if args.debug:
+                print(f"{group_name} created as {group_type}")
 
     def update_label(self):
         for slider, label, multiplier in self.sliders:
@@ -336,8 +333,11 @@ def parsefile(file):
     return groups, filetype
 
 if __name__ == '__main__':
+    global args # global to access args outside
     parser = argparse.ArgumentParser(description="Dynamic GUI Builder")
     parser.add_argument("input_file", help="Path to the text file containing parameters")
+    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
+
     args = parser.parse_args()
 
     groups, filetype = parsefile(args.input_file)    
