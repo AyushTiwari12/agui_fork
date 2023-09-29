@@ -80,6 +80,7 @@ class MainWindow(QtWidgets.QMainWindow):
         file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save File", default_file_path, "All Files (*)")
         if file_path:
             with open(file_path, "w") as file:
+                file.write("# written by qtrun.py - do not edit\n")
                 for line in contents:
                     for key, value in line.items():
                         file.write(f"{key}={value}")
@@ -99,6 +100,8 @@ class MainWindow(QtWidgets.QMainWindow):
             default_values = {}
             with open(file, "r") as f:
                 for line in f:
+                    if line[0] == '#':
+                        continue
                     if self.input_file_type == 'csh':
                         line = re.sub("set","",line,count=1)
                     label, value = line.strip().split("=")
