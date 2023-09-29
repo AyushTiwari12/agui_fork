@@ -13,9 +13,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__()
 
         self.groups = parameters
-        self.radio_groups = []
         self.input_file = input_file
         self.input_file_type = filetype
+        self.radio_groups = []
         self.slider_multiplier = []
         self.sliders = []
 
@@ -64,6 +64,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # runs the file. takes the input file and runs it, piping the set paraments into the file as args
     # it assumes the script can self-execute with the appropriate #! directive on the first line
     def run(self):
+        print("running: " + self.input_file)
         contents = self.gather_data()
         param = self.input_file
         for line in contents:
@@ -71,7 +72,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 param += f" {key}={value}"
         subprocess.run(param.split())
     
-    # saves the options into a separate file named inputfilename.key. Thiswill be saved in the format
+    # saves the options into a separate file named inputfilename.key. This will be saved in the format
     # key=value and formatted according to the input file type.
     def save(self):
         contents = self.gather_data()
@@ -127,7 +128,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def quit(self):
         self.close()
-        print('quit')
 
     def help(self):
         print('help')
@@ -138,7 +138,6 @@ class MainWindow(QtWidgets.QMainWindow):
             group_type, group_name, options, default_option, help = group
 
             if group_type == "RADIO":
-                print("radio button created")
                 new_group = QtWidgets.QButtonGroup()
                 self.radio_groups.append(new_group)
                 group_layout = QtWidgets.QHBoxLayout()
@@ -156,7 +155,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.pagelayout.addLayout(group_layout)
 
             elif group_type == "IFILE" or group_type == "OFILE" or group_type == "IDIR" or group_type == "ODIR":
-                print("browse files button created")
                 group_layout = QtWidgets.QHBoxLayout()
                 label = QtWidgets.QLabel(group_name+":")
                 label.setToolTip(help)
@@ -168,15 +166,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 txt.setText(default_option)
                 txt.setObjectName(group_name)
                 if group_type == "OFILE" or group_type == "IFILE":
-                    btn.clicked.connect(lambda edit=txt: self.browse("FILE", edit))
+                    self.ofile = group_name
+                    btn.clicked.connect(lambda _, edit=txt: self.browse("FILE", edit))
                 else:
-                    btn.clicked.connect(lambda edit=txt: self.browse("DIR", edit))
+                    btn.clicked.connect(lambda _, edit=txt: self.browse("DIR", edit))
                 group_layout.addWidget(btn)
                 group_layout.addWidget(txt)
                 self.pagelayout.addLayout(group_layout)
 
             elif group_type == "CHECK":
-                print("checkbox created")
                 group_layout = QtWidgets.QHBoxLayout()
                 label = QtWidgets.QLabel(group_name+":")
                 label.setToolTip(help)
@@ -191,7 +189,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.pagelayout.addLayout(group_layout)
 
             elif group_type == "ENTRY":
-                print("textbox created")
                 group_layout = QtWidgets.QHBoxLayout()
                 label = QtWidgets.QLabel(group_name+":")
                 label.setToolTip(help)
@@ -210,7 +207,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 options = ''.join(options)
                 options = options.split(':')
 
-                print("slider created")
                 #creates a horizontal decimal slider
                 decimals = len(str(options[2]).split('.')[1]) if '.' in str(options[2]) else 0
                 multiplier = 10**decimals
@@ -219,10 +215,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 slider.setSingleStep(int(float(options[2])*multiplier))
                 slider.setPageStep(int(float(options[2])*multiplier))       #moves the slider when clicking or up/down
                 slider.setRange(int(options[0])*multiplier, int(options[1])*multiplier)
-                slider.setValue(int(float(default_option[0])*multiplier))
+                slider.setValue(int(float(default_option)*multiplier))
 
                 slider_label = QtWidgets.QLabel(f"{slider.value()/multiplier}", self)
-                slider.valueChanged.connect(lambda: self.updateLabel())
+
+                slider.valueChanged.connect(lambda: self.update_label()) # updates to current value
                 slider.setObjectName(group_name)
                 self.slider_multiplier.append(multiplier)
                 self.sliders.append((slider, slider_label, multiplier))
@@ -237,7 +234,10 @@ class MainWindow(QtWidgets.QMainWindow):
             separator.setFixedHeight(1)  # Set a fixed height for the separator
             self.pagelayout.addWidget(separator)
 
-    def updateLabel(self):
+            if args.debug:
+                print(f"{group_name} created as {group_type}")
+
+    def update_label(self):
         for slider, label, multiplier in self.sliders:
             label.setText(f"{slider.value()/multiplier}")
 
@@ -245,7 +245,6 @@ class MainWindow(QtWidgets.QMainWindow):
         options = QtWidgets.QFileDialog.Options()
         file = None
         dir = None
-
         if gtype == 'FILE':
             file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Choose a File", "", "All Files (*)", options=options)
         if gtype == 'DIR':
@@ -254,8 +253,9 @@ class MainWindow(QtWidgets.QMainWindow):
             txt.setText(file)
             print(file + " selected")
         if dir:
-            print(f"{dir} selected")
-
+            txt.setText(dir)
+            print(dir + " selected")
+        
     def gather_data(self):
         layout_data = []
 
@@ -333,15 +333,19 @@ def parsefile(file):
     return groups, filetype
 
 if __name__ == '__main__':
+    global args # global to access args outside
     parser = argparse.ArgumentParser(description="Dynamic GUI Builder")
     parser.add_argument("input_file", help="Path to the text file containing parameters")
+    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
+
     args = parser.parse_args()
 
     groups, filetype = parsefile(args.input_file)    
 
     app = QtWidgets.QApplication(sys.argv)
-    w = MainWindow(groups, args.input_file, filetype)
-    w.inputFile = args.input_file
+    
+    w = MainWindow(groups, os.path.abspath(args.input_file), filetype)
+    # w.inputFile = args.input_file
     w.adjustSize()  #adjust to fit elements accordingly
 
     #sets a minimum window size
