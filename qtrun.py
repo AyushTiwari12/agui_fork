@@ -7,6 +7,9 @@ import argparse
 import re
 import subprocess
 
+_version = "29-sep-2023"
+_debug = False
+
 class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parameters, input_file, filetype):
@@ -347,16 +350,27 @@ def parsefile(file):
 if __name__ == '__main__':
     global args # global to access args outside
     parser = argparse.ArgumentParser(description="Dynamic GUI Builder")
-    parser.add_argument("input_file", help="Path to the text file containing parameters")
+    parser.add_argument("input_file", help="Text file containing `key=val` parameters, optionally add a keyfile", default=None, nargs='*')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
+    parser.add_argument('-v', '--version', action='store_true', help='Show version')
 
     args = parser.parse_args()
+    if args.version:
+        print(_version)
+        sys.exit(0)
 
-    groups, filetype = parsefile(args.input_file)    
+    _debug = args.debug
+
+    input_file = args.input_file[0]
+    if len(args.input_file) > 1:
+        print("multiple args not yet supported")
+    if _debug:
+        print(input_file)
+    groups, filetype = parsefile(input_file)        
 
     app = QtWidgets.QApplication(sys.argv)
     
-    w = MainWindow(groups, os.path.abspath(args.input_file), filetype)
+    w = MainWindow(groups, os.path.abspath(input_file), filetype)
     # w.inputFile = args.input_file
     w.adjustSize()  #adjust to fit elements accordingly
 
@@ -366,7 +380,9 @@ if __name__ == '__main__':
     w.show()
 
     try:
-        print('opening window')
+        if _debug:
+            print('opening window')
         sys.exit(app.exec())
     except SystemExit:
-        print('closing window')
+        if _debug:
+            print('closing window')
