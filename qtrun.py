@@ -115,16 +115,25 @@ class MainWindow(QtWidgets.QMainWindow):
                         widget = element.itemAt(widget_index).widget()
                         
                         if isinstance(widget, QtWidgets.QLineEdit):
-                            widget.setText(''.join(default_values[widget.objectName()]))
+                            try:
+                                widget.setText(''.join(default_values[widget.objectName()]))
+                            except:
+                                print("Skipping resetting new entry",widget.objectName())                                
 
                         elif isinstance(widget, QtWidgets.QRadioButton) or isinstance(widget, QtWidgets.QCheckBox):
-                            if widget.text() in default_values[widget.objectName()]:
-                                widget.setChecked(True)
+                            try:
+                                if widget.text() in default_values[widget.objectName()]:
+                                    widget.setChecked(True)
+                            except:
+                                print("Skipping resetting new button",widget.objectName())
 
                         elif isinstance(widget, QtWidgets.QSlider):
-                            multiplier = self.slider_multiplier.pop(0)
-                            widget.setValue(int(float(''.join(default_values[widget.objectName()]))*multiplier))
-                            self.slider_multiplier.append(multiplier)
+                            try:
+                                multiplier = self.slider_multiplier.pop(0)
+                                widget.setValue(int(float(''.join(default_values[widget.objectName()]))*multiplier))
+                                self.slider_multiplier.append(multiplier)
+                            except:
+                                print("Skipping resetting new slider",widget.objectName())
 
     def quit(self):
         self.close()
