@@ -7,7 +7,7 @@ import argparse
 import re
 import subprocess
 
-_version = "29-sep-2023"
+_version = "3-oct-2023"
 _debug = False
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -145,7 +145,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close()
 
     def help(self):
-        print('help')
+        print("Run:     run the script withe the selected `key=val` arguments")
+        print("Save:    save the key=val settings in a key file for later retrieval")
+        print("Load:    load a keyfile previously saved")
+        print("Quit:    quit the program")
+        print("Help:    this help")        
+        print("Hover with the mouse over the keyword names to get some help on the keywords")
 
     # function to create each widget from the input file
     def createWidgetsFromGroups(self):
@@ -349,8 +354,12 @@ def parsefile(file):
 
 if __name__ == '__main__':
     global args # global to access args outside
-    parser = argparse.ArgumentParser(description="Dynamic GUI Builder")
-    parser.add_argument("input_file", help="Text file containing `key=val` parameters, optionally add a keyfile", default=None, nargs='*')
+    parser = argparse.ArgumentParser(description="Dynamic GUI Builder - version %s" % _version,
+                                     formatter_class=argparse.RawTextHelpFormatter)
+
+    parser.add_argument("input_file", help="Script containing `key=val` parameters and #> GUI directives\n" +
+                        "optionally add a keyfile [not implemented yet]",
+                        default=None, nargs='*')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
     parser.add_argument('-v', '--version', action='store_true', help='Show version')
 
