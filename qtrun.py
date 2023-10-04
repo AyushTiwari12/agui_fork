@@ -7,7 +7,7 @@ import argparse
 import re
 import subprocess
 
-_version = "3-oct-2023"
+_version = "4-oct-2023"
 _debug = False
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -31,12 +31,15 @@ class MainWindow(QtWidgets.QMainWindow):
         toolbar = self.addToolBar("ToolBar")
 
         run_action = QtWidgets.QAction('Run', self)
+        dry_action = QtWidgets.QAction('Dryrun', self)
         save_action = QtWidgets.QAction('Save', self)
         load_action = QtWidgets.QAction('Load', self)
         quit_action = QtWidgets.QAction('Quit', self)
         help_action = QtWidgets.QAction('Help', self)
 
         toolbar.addAction(run_action)
+        toolbar.addSeparator()
+        toolbar.addAction(dry_action)
         toolbar.addSeparator()
         toolbar.addAction(save_action)
         toolbar.addSeparator()
@@ -47,6 +50,7 @@ class MainWindow(QtWidgets.QMainWindow):
         toolbar.addAction(help_action)
 
         run_action.triggered.connect(self.run)
+        dry_action.triggered.connect(self.dry)
         save_action.triggered.connect(self.save)
         load_action.triggered.connect(self.load)
         quit_action.triggered.connect(self.quit)
@@ -74,6 +78,15 @@ class MainWindow(QtWidgets.QMainWindow):
             for key, value in line.items():
                 param += f" {key}={value}"
         subprocess.run(param.split())
+
+    def dry(self):
+        cmd = self.input_file
+        contents = self.gather_data()
+        param = self.input_file
+        for line in contents:
+            for key, value in line.items():
+                cmd += f" {key}={value}"
+        print(cmd)
     
     # saves the options into a separate file named inputfilename.key. This will be saved in the format
     # key=value and formatted according to the input file type.
@@ -145,12 +158,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close()
 
     def help(self):
+        print("qtrun version %s" % _version)
+        print("")
         print("Run:     run the script withe the selected `key=val` arguments")
+        print("Dryrun:  show the command that would be run")
         print("Save:    save the key=val settings in a key file for later retrieval")
         print("Load:    load a keyfile previously saved")
         print("Quit:    quit the program")
         print("Help:    this help")        
+        print("")
         print("Hover with the mouse over the keyword names to get some help on the keywords")
+        print("The current script is: ",args.input_file[0])
+        # print("The current keyfile is: ",args.input_file[1])
 
     # function to create each widget from the input file
     def createWidgetsFromGroups(self):
