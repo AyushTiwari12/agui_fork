@@ -118,3 +118,22 @@ where versions can be retrieved as follows:
      python --version
      python -c 'import matplotlib as m; print(m.__version__)'
 
+
+# qtrun
+
+Notice that qtrun.py is also copied to $NEMO/src/tools/tkrun such that
+when NEMO is installed a new version will appear in $NEMOBIN/qtrun  !
+
+Here is a wish list for the next version of qtrun:
+
+- optional keyfile as 2nd argument
+- better vertical size guess?
+- remember last keyfile name used?
+- option to not do "all files", but e.g. "*key"
+- help() should be popop, not to terminal
+- should we try and accumulate "#> HELP" sections and add this to the help()
+- logfile popop vs. putting it in terminal???
+- log (or generally math) sliders with optional function, e.g.
+          #> SCALE 0:20:0.1 10**
+- design an experiment where qtrun makes a multi-variate table that is viewed
+  with a 3rd party program (e.g. glueviz, topcat)
