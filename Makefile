@@ -17,8 +17,8 @@ GIT_DIRS = athena athenak pythena
 
 URL0  = https://github.com/teuben/Athena-Cversion
 URL1  = https://github.com/PrincetonUniversity/athena
-URL2  = https://gitlab.com/theias/hpc/jmstone/athena-parthenon/athenak
-URL2  = https://gitlab.com/theias/hpc/jmstone/athena-parthenon/athena-mini-k
+URL2a = https://gitlab.com/theias/hpc/jmstone/athena-parthenon/athenak
+URL2b = https://gitlab.com/theias/hpc/jmstone/athena-parthenon/athena-mini-k
 URL2  = https://github.com/teuben/Athena-miniK
 URL3  = https://github.com/teuben/nemo
 URL4  = https://github.com/teuben/tkrun
